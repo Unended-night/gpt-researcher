@@ -50,6 +50,11 @@ class Memory:
                 if "openai_api_base" not in embedding_kwargs and os.environ.get("OPENAI_BASE_URL"):
                     embedding_kwargs["openai_api_base"] = os.environ["OPENAI_BASE_URL"]
 
+
+                # Support custom chunk_size for APIs with batch limits (e.g., Doubao: 256)
+                if "chunk_size" not in embedding_kwargs:
+                    embedding_kwargs["chunk_size"] = int(os.environ.get("EMBEDDING_CHUNK_SIZE", 256))
+
                 _embeddings = OpenAIEmbeddings(model=model, **embedding_kwargs)
             case "azure_openai":
                 from langchain_openai import AzureOpenAIEmbeddings
