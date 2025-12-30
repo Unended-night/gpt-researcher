@@ -47,8 +47,19 @@ class Memory:
                 from langchain_openai import OpenAIEmbeddings
 
                 # Support custom OpenAI-compatible APIs via OPENAI_BASE_URL
-                if "openai_api_base" not in embedding_kwargs and os.environ.get("OPENAI_BASE_URL"):
-                    embedding_kwargs["openai_api_base"] = os.environ["OPENAI_BASE_URL"]
+                openai_base_url = os.environ.get("OPENAI_BASE_URL")
+                if "openai_api_base" not in embedding_kwargs and openai_base_url:
+                    embedding_kwargs["openai_api_base"] = openai_base_url
+
+                # Many OpenAI-compatible providers (e.g., Doubao/Ark, LM Studio) do not
+                # accept token-id arrays as the embeddings `input`. LangChain may send
+                # token arrays when `check_embedding_ctx_length=True` (len-safe path).
+                # Default to disabling this behavior for non-OpenAI base URLs, while
+                # still allowing explicit override via EMBEDDING_KWARGS.
+                if "check_embedding_ctx_length" not in embedding_kwargs and openai_base_url:
+                    normalized = openai_base_url.rstrip("/").lower()
+                    if not normalized.startswith("https://api.openai.com"):
+                        embedding_kwargs["check_embedding_ctx_length"] = False
 
 
                 # Support custom chunk_size for APIs with batch limits (e.g., Doubao: 256)
